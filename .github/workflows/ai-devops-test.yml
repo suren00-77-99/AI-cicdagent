@@ -3,6 +3,10 @@ name: AI DevOps Agent Test
 on:
   workflow_dispatch:
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   test-failure:
     runs-on: ubuntu-latest
@@ -27,29 +31,48 @@ jobs:
           echo "Branch: $GITHUB_REF_NAME"
           echo "Commit: $GITHUB_SHA"
           echo "Workflow: $GITHUB_WORKFLOW"
+          echo "Run ID: $GITHUB_RUN_ID"
 
-      - name: Save failure context
+      - name: Collect GitHub job logs
         if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p ai-agent-output
 
+          echo "Downloading GitHub Actions logs..."
+
+          gh run view "$GITHUB_RUN_ID" \
+            --log-failed > ai-agent-output/failed-job.log
+
+          echo "================================"
+          echo "FAILED JOB LOG"
+          echo "================================"
+
+          cat ai-agent-output/failed-job.log
+
+      - name: Create AI Agent input
+        if: failure()
+        run: |
           cat > ai-agent-output/context.json <<EOF
           {
             "repository": "$GITHUB_REPOSITORY",
             "workflow": "$GITHUB_WORKFLOW",
             "branch": "$GITHUB_REF_NAME",
             "commit": "$GITHUB_SHA",
-            "run_id": "$GITHUB_RUN_ID",
-            "job": "test-failure"
+            "run_id": "$GITHUB_RUN_ID"
           }
           EOF
 
-          echo "AI Agent context:"
+          echo "================================"
+          echo "AI AGENT INPUT"
+          echo "================================"
+
           cat ai-agent-output/context.json
 
-      - name: Upload failure context
+      - name: Upload AI Agent input
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ai-agent-failure-context
+          name: ai-agent-input
           path: ai-agent-output/
