@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: read
 
 jobs:
@@ -14,15 +13,23 @@ jobs:
     steps:
 
       - name: Generate test failure
+        id: failure
+        continue-on-error: true
         run: |
-          echo "Starting deployment..."
-          echo "Connecting to database..."
-          echo "ERROR: Database connection refused"
-          echo "ERROR: Unable to connect to database on port 5432"
+          mkdir -p ai-agent-output
+
+          {
+            echo "Starting deployment..."
+            echo "Connecting to database..."
+            echo "ERROR: Database connection refused"
+            echo "ERROR: Unable to connect to database on port 5432"
+            echo "Error: Process completed with exit code 1."
+          } | tee ai-agent-output/failed-job.log
+
           exit 1
 
       - name: Collect failure information
-        if: failure()
+        if: steps.failure.outcome == 'failure'
         run: |
           echo "================================"
           echo "PIPELINE FAILED"
@@ -33,29 +40,8 @@ jobs:
           echo "Workflow: $GITHUB_WORKFLOW"
           echo "Run ID: $GITHUB_RUN_ID"
 
-      - name: Collect GitHub job logs
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p ai-agent-output
-
-          echo "Downloading GitHub Actions logs..."
-
-          gh run view "$GITHUB_RUN_ID" \
-            --repo "$GITHUB_REPOSITORY" \
-            --log-failed > ai-agent-output/failed-job.log
-
-          echo "================================"
-          echo "FAILED JOB LOG"
-          echo "================================"
-
-          cat ai-agent-output/failed-job.log
-
-
-
-      - name: Create AI Agent input
-        if: failure()
+      - name: Create AI Agent context
+        if: steps.failure.outcome == 'failure'
         run: |
           cat > ai-agent-output/context.json <<EOF
           {
@@ -63,7 +49,8 @@ jobs:
             "workflow": "$GITHUB_WORKFLOW",
             "branch": "$GITHUB_REF_NAME",
             "commit": "$GITHUB_SHA",
-            "run_id": "$GITHUB_RUN_ID"
+            "run_id": "$GITHUB_RUN_ID",
+            "job": "test-failure"
           }
           EOF
 
@@ -73,8 +60,17 @@ jobs:
 
           cat ai-agent-output/context.json
 
+      - name: Display captured logs
+        if: steps.failure.outcome == 'failure'
+        run: |
+          echo "================================"
+          echo "CAPTURED PIPELINE LOG"
+          echo "================================"
+
+          cat ai-agent-output/failed-job.log
+
       - name: Upload AI Agent input
-        if: failure()
+        if: steps.failure.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: ai-agent-input
