@@ -15,3 +15,14 @@ jobs:
           echo "ERROR: Database connection refused"
           echo "ERROR: Unable to connect to database on port 5432"
           exit 1
+
+      - name: Collect failure information
+        if: failure()
+        run: |
+          echo "================================"
+          echo "PIPELINE FAILED"
+          echo "================================"
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Branch: $GITHUB_REF_NAME"
+          echo "Commit: $GITHUB_SHA"
+          echo "Workflow: $GITHUB_WORKFLOW"
