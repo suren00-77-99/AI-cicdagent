@@ -1,0 +1,7 @@
+{
+  "repository": "demo/devops-app",
+  "workflow": "CI",
+  "branch": "main",
+  "commit": "abc123",
+  "log": "Run flake8 frontend\nfrontend/app.py:27:5: E501 line too long (121 > 100 characters)\nError: Process completed with exit code 1."
+}
