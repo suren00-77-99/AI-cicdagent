@@ -43,6 +43,7 @@ jobs:
           echo "Downloading GitHub Actions logs..."
 
           gh run view "$GITHUB_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
             --log-failed > ai-agent-output/failed-job.log
 
           echo "================================"
@@ -50,6 +51,8 @@ jobs:
           echo "================================"
 
           cat ai-agent-output/failed-job.log
+
+
 
       - name: Create AI Agent input
         if: failure()
