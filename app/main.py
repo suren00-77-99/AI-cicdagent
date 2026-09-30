@@ -31,12 +31,14 @@ class AnalyzeRequest(BaseModel):
 
 async def call_ollama(prompt: str):
     payload = {
-        "model": AI_MODEL,
-        "system": SYSTEM_PROMPT,
-        "prompt": prompt,
-        "stream": False,
-        "format": "json",
-        "options": {"temperature": AI_TEMPERATURE},
+    "model": OLLAMA_MODEL,
+    "prompt": prompt,
+    "stream": False,
+    "options": {
+        "num_ctx": 4096,
+        "num_predict": 512,
+        "temperature": 0.1
+        }
     }
     async with httpx.AsyncClient(timeout=180) as client:
         response = await client.post(f"{OLLAMA_URL}/api/generate", json=payload)
