@@ -1,0 +1,17 @@
+name: AI DevOps Agent Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-failure:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate test failure
+        run: |
+          echo "Starting deployment..."
+          echo "Connecting to database..."
+          echo "ERROR: Database connection refused"
+          echo "ERROR: Unable to connect to database on port 5432"
+          exit 1
