@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Generate test failure
         run: |
           echo "Starting deployment..."
@@ -26,3 +27,29 @@ jobs:
           echo "Branch: $GITHUB_REF_NAME"
           echo "Commit: $GITHUB_SHA"
           echo "Workflow: $GITHUB_WORKFLOW"
+
+      - name: Save failure context
+        if: failure()
+        run: |
+          mkdir -p ai-agent-output
+
+          cat > ai-agent-output/context.json <<EOF
+          {
+            "repository": "$GITHUB_REPOSITORY",
+            "workflow": "$GITHUB_WORKFLOW",
+            "branch": "$GITHUB_REF_NAME",
+            "commit": "$GITHUB_SHA",
+            "run_id": "$GITHUB_RUN_ID",
+            "job": "test-failure"
+          }
+          EOF
+
+          echo "AI Agent context:"
+          cat ai-agent-output/context.json
+
+      - name: Upload failure context
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-agent-failure-context
+          path: ai-agent-output/
